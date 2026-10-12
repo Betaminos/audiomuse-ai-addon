@@ -10,6 +10,7 @@
   "hassio_api": false,
   "host_network": false,
   "ingress": false,
+  "tmpfs": true,
   "panel_icon": "mdi:music-circle",
   "ports": {
     "8000/tcp": 8000
@@ -20,6 +21,9 @@
   "options": {},
   "schema": {},
   "environment": {
-    "HOME": "/data"
+    "HOME": "/data",
+    "AUDIOMUSE_OPEN_BROWSER": "0",
+    "PYTHONUNBUFFERED": "1",
+    "XDG_STATE_HOME": "/tmp/audiomuse-state"
   }
 }
