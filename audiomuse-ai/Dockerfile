@@ -1,5 +1,3 @@
-Dockerfile
-
 #syntax=docker/dockerfile:1
 ###############################################################################
 # HAOS add-on wrapping AudioMuse-AI's official native aarch64 build.
