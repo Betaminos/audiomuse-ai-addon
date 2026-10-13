@@ -8,12 +8,21 @@ on:
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
+concurrency:
+  # Serialize builds: a newer push cancels the in-flight run (which by
+  # design has not committed its version yet), so two runs can never
+  # both compute the same next version and race each other.
+  group: addon-build
+  cancel-in-progress: true
+
 jobs:
   build:
     # Native ARM64 runners are free for PUBLIC repositories.
     runs-on: ubuntu-24.04-arm
+    # Hard stop for a wedged build instead of burning runner time.
+    timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write   # push the version-bump commit back to the branch
       packages: write
     steps:
       - name: Checkout
@@ -22,8 +31,17 @@ jobs:
       - name: Compute image name (must be lowercase)
         run: echo "IMAGE=${GITHUB_REPOSITORY,,}/audiomuse-ai" >> "$GITHUB_ENV"
 
-      - name: Read add-on version
-        run: echo "ADDON_VERSION=$(jq -r .version audiomuse-ai/config.json)" >> "$GITHUB_ENV"
+      - name: Bump packaging suffix (3.6.3-4 -> 3.6.3-5)
+        run: |
+          CURRENT=$(jq -r .version audiomuse-ai/config.json)
+          UPSTREAM="${CURRENT%%-*}"
+          SUFFIX="${CURRENT#*-}"
+          case "$SUFFIX" in ''|*[!0-9]*) SUFFIX=0 ;; esac
+          NEW="$UPSTREAM-$((SUFFIX + 1))"
+          jq --arg v "$NEW" '.version = $v' audiomuse-ai/config.json > /tmp/config.json
+          mv /tmp/config.json audiomuse-ai/config.json
+          echo "ADDON_VERSION=$NEW" >> "$GITHUB_ENV"
+          echo "Publishing add-on version $NEW"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -33,11 +51,42 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
+        id: push
         uses: docker/build-push-action@v6
         with:
           context: audiomuse-ai
           platforms: linux/arm64
           push: true
+          # Reuse Docker layers between builds (GitHub's cache service): the
+          # apt layer and the big .deb download layer are keyed on the
+          # Dockerfile contents and the AUDIOMUSE_VERSION ARG, so packaging
+          # suffix builds skip re-downloading everything.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
             ghcr.io/${{ env.IMAGE }}:${{ env.ADDON_VERSION }}
             ghcr.io/${{ env.IMAGE }}:latest
+
+      - name: Job summary
+        run: |
+          {
+            echo "### Published add-on version \`${ADDON_VERSION}\`"
+            echo "- Image: \`ghcr.io/${IMAGE}:${ADDON_VERSION}\`"
+            echo "- Digest: \`${{ steps.push.outputs.digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Commit the bumped config.json only after the image is safely in
+      # GHCR, so the repo never advertises a version that cannot be pulled.
+      # NOTE: do the git add/commit first and push last — a rebase/pull
+      # here would refuse to run because the tree has uncommitted changes.
+      - name: Commit bumped version back to the branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audiomuse-ai/config.json
+          git commit -m "chore: publish add-on version $ADDON_VERSION [skip ci]"
+          if git push origin "HEAD:${{ github.ref_name }}"; then
+            echo "Version commit pushed."
+          else
+            echo "Branch moved during the build; version not committed (image $ADDON_VERSION is safely in GHCR)."
+          fi
