@@ -16,9 +16,13 @@ if [ -z "${PASSWORD}" ]; then
 fi
 export MALOJA_FORCE_PASSWORD="${PASSWORD}"
 
-# Hand over to the upstream s6-overlay init, which starts Maloja as user
-# `abc` via the svc-python service. exec is important: /init must remain
-# PID 1 so container stop signals reach s6 and shut Maloja down cleanly.
-# Environment exported above is inherited by /init and therefore available
-# to the service (this is exactly how the upstream image handles PUID/PGID).
-exec /init
+# Run Maloja directly — exactly the command the upstream s6 service
+# (svc-python) would execute. s6-overlay is deliberately bypassed: the HAOS
+# Supervisor starts add-on containers with Docker's default init, so /init
+# would never be PID 1, and s6-overlay v3 aborts with
+# "s6-overlay-suexec: fatal: can only run as pid 1". Running as root is the
+# same effective setup as the upstream default (PUID=0/PGID=0 make `abc`
+# root there anyway), and /data is the root-owned add-on volume.
+# exec keeps this process's PID for Python, so Supervisor stop signals
+# (SIGTERM) reach Maloja directly and shut it down cleanly.
+exec /venv/bin/python -m maloja run
