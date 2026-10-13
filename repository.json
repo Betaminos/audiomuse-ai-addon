@@ -1,5 +1,5 @@
 {
-  "name": "AudioMuse-AI (arm64)",
-  "url": "https://github.com/betaminos/audiomuse-ai-addon",
+  "name": "Addons for HomeAssistant (arm64)",
+  "url": "https://github.com/betaminos/hassio-addons",
   "maintainer": "Betaminos"
 }
