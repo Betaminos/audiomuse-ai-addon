@@ -1,0 +1,33 @@
+{
+  "name": "Maloja",
+  "version": "3.2.7-1",
+  "slug": "maloja",
+  "description": "Self-hosted music scrobble database with listening statistics and charts — a Spotify Wrapped-style year-in-review for Navidrome and any scrobbler",
+  "arch": [
+    "aarch64"
+  ],
+  "image": "ghcr.io/betaminos/hassio-addons/maloja",
+  "startup": "services",
+  "boot": "auto",
+  "hassio_api": false,
+  "host_network": false,
+  "ingress": false,
+  "panel_icon": "mdi:chart-bar",
+  "ports": {
+    "42010/tcp": 42010
+  },
+  "ports_description": {
+    "42010/tcp": "Maloja web UI (charts, year-in-review, admin)"
+  },
+  "options": {
+    "password": ""
+  },
+  "schema": {
+    "password": "str"
+  },
+  "environment": {
+    "MALOJA_DATA_DIRECTORY": "/data",
+    "MALOJA_SKIP_SETUP": "yes",
+    "PYTHONUNBUFFERED": "1"
+  }
+}
