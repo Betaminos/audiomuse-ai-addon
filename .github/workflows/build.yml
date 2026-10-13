@@ -1,12 +1,14 @@
-name: Build ARM64 add-on image
+name: Build add-on images
 
 on:
   push:
     branches: [main, master]
-    paths:
-      - "audiomuse-ai/**"
-      - ".github/workflows/build.yml"
   workflow_dispatch:
+    inputs:
+      addon:
+        description: "Add-on folder to build (empty = all)"
+        required: false
+        default: ""
 
 concurrency:
   # Serialize builds: a newer push cancels the in-flight run (which by
@@ -17,37 +19,52 @@ concurrency:
 
 jobs:
   build:
-    # Native ARM64 runners are free for PUBLIC repositories.
+    # Native ARM64 runners are free for PUBLIC repositories. Add-ons build
+    # sequentially in this single job; parallel matrix legs would race their
+    # version-bump commits against each other.
     runs-on: ubuntu-24.04-arm
-    # Hard stop for a wedged build instead of burning runner time.
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: write   # push the version-bump commit back to the branch
       packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # history needed to diff against the previous push
 
-      - name: Compute image name (must be lowercase)
-        run: echo "IMAGE=${GITHUB_REPOSITORY,,}/audiomuse-ai" >> "$GITHUB_ENV"
-
-      - name: Bump packaging suffix
+      - name: Determine which add-ons to build
+        id: list
         run: |
-          CURRENT=$(jq -r .version audiomuse-ai/config.json)
-          UPSTREAM="${CURRENT%%-*}"
-          SUFFIX="${CURRENT#*-}"
-          case "$SUFFIX" in ''|*[!0-9]*) SUFFIX=0 ;; esac
-          NEW="$UPSTREAM-$((SUFFIX + 1))"
-          jq --arg v "$NEW" '.version = $v' audiomuse-ai/config.json > /tmp/config.json
-          mv /tmp/config.json audiomuse-ai/config.json
-          echo "ADDON_VERSION=$NEW" >> "$GITHUB_ENV"
-          echo "Publishing add-on version $NEW"
+          set -eu
+          INPUT="${{ github.event.inputs.addon }}"
+          if [ -n "$INPUT" ]; then
+            ADDONS="$INPUT"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              # New branch or un-diffable push: build everything.
+              ADDONS=$(find . -mindepth 2 -maxdepth 2 -name config.json \
+                       -printf '%h\n' | sed 's|^\./||' | tr '\n' ' ')
+            else
+              ADDONS=""
+              for DIR in $(git diff --name-only "$BEFORE" "${{ github.sha }}" \
+                             | cut -d/ -f1 | sort -u); do
+                [ -f "$DIR/config.json" ] && ADDONS="$ADDONS$DIR "
+              done
+            fi
+          else
+            # Manual run with no folder selected: build everything.
+            ADDONS=$(find . -mindepth 2 -maxdepth 2 -name config.json \
+                     -printf '%h\n' | sed 's|^\./||' | tr '\n' ' ')
+          fi
+          if [ -z "$ADDONS" ]; then
+            echo "No add-on folders changed — nothing to build."
+          else
+            echo "Building:$ADDONS"
+          fi
+          echo "addons=$ADDONS" >> "$GITHUB_OUTPUT"
 
-      # The gha cache backend below REQUIRES buildx's docker-container driver.
-      # Without this step buildx uses the plain docker driver, which cannot
-      # export a build cache, and the build dies within a second with
-      # "Cache export is not supported for the docker driver" (this is
-      # exactly what failed run #7 on 2026-10-13 did).
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -58,43 +75,48 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
-        id: push
-        uses: docker/build-push-action@v7
-        with:
-          context: audiomuse-ai
-          platforms: linux/arm64
-          push: true
-          # Reuse Docker layers between builds (GitHub's cache service): the
-          # apt layer and the big .deb download layer are keyed on the
-          # Dockerfile contents and the AUDIOMUSE_VERSION ARG, so packaging
-          # suffix builds skip re-downloading everything.
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: |
-            ghcr.io/${{ env.IMAGE }}:${{ env.ADDON_VERSION }}
-            ghcr.io/${{ env.IMAGE }}:latest
-
-      - name: Job summary
+      - name: Bump versions, build and push images
+        env:
+          ADDONS: ${{ steps.list.outputs.addons }}
+          REPO: ${{ github.repository }}
         run: |
-          {
-            echo "### Published add-on version \`${ADDON_VERSION}\`"
-            echo "- Image: \`ghcr.io/${IMAGE}:${ADDON_VERSION}\`"
-            echo "- Digest: \`${{ steps.push.outputs.digest }}\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+          set -eu
+          for ADDON in $ADDONS; do
+            CONFIG="$ADDON/config.json"
+            CURRENT=$(jq -r .version "$CONFIG")
+            UPSTREAM="${CURRENT%%-*}"
+            SUFFIX="${CURRENT#*-}"
+            case "$SUFFIX" in ''|*[!0-9]*) SUFFIX=0 ;; esac
+            NEW="$UPSTREAM-$((SUFFIX + 1))"
+            jq --arg v "$NEW" '.version = $v' "$CONFIG" > /tmp/config.json
+            mv /tmp/config.json "$CONFIG"
 
-      # Commit the bumped config.json only after the image is safely in
+            IMAGE="ghcr.io/${REPO,,}/$ADDON"
+            echo "=== Publishing $ADDON $NEW → $IMAGE ==="
+            docker buildx build \
+              --platform linux/arm64 \
+              --cache-from type=gha,scope="$ADDON" \
+              --cache-to type=gha,scope="$ADDON",mode=max \
+              --push \
+              --tag "$IMAGE:$NEW" \
+              --tag "$IMAGE:latest" \
+              "$ADDON"
+            echo "**$ADDON $NEW** → \`$IMAGE:$NEW\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      # Commit the bumped versions only after ALL images are safely in
       # GHCR, so the repo never advertises a version that cannot be pulled.
-      # NOTE: do the git add/commit first and push last — a rebase/pull
-      # here would refuse to run because the tree has uncommitted changes.
-      - name: Commit bumped version back to the branch
+      # One commit for every bumped add-on — a single push, nothing to race.
+      - name: Commit bumped versions back to the branch
         run: |
+          if git diff --quiet; then
+            echo "Nothing built — no version bumps to commit."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add audiomuse-ai/config.json
-          git commit -m "chore: publish add-on version $ADDON_VERSION [skip ci]"
-          if git push origin "HEAD:${{ github.ref_name }}"; then
-            echo "Version commit pushed."
-          else
-            echo "Branch moved during the build; version not committed (image $ADDON_VERSION is safely in GHCR)."
+          git commit -am "chore: publish add-on images [skip ci]"
+          git pull --rebase origin "${{ github.ref_name }}" || true
+          if ! git push origin "HEAD:${{ github.ref_name }}"; then
+            echo "Branch moved during the build; version commit not pushed (images are safely in GHCR)."
           fi
