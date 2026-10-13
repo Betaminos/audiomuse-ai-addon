@@ -6,7 +6,7 @@
   "arch": [
     "aarch64"
   ],
-  "image": "ghcr.io/betaminos/audiomuse-ai-addon/audiomuse-ai",
+  "image": "ghcr.io/betaminos/hassio-addons/audiomuse-ai",
   "startup": "services",
   "boot": "auto",
   "hassio_api": false,
