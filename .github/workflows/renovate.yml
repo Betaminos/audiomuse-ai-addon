@@ -1,0 +1,42 @@
+# Self-hosted Renovate: the open-source CLI runs on GitHub's runners, inside
+# this repository. No Mend app, no third-party account, no extra terms.
+#
+# Commit as .github/workflows/renovate.yml
+name: Renovate
+
+on:
+  schedule:
+    # Daily at 06:17 UTC (08:17 Berlin time). Off the hour to dodge GitHub's
+    # cron rush; scheduled runs may still start a few minutes late.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+# The Renovate CLI authenticates with RENOVATE_TOKEN; the workflow itself
+# needs no GitHub permissions at all.
+permissions: {}
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Run Renovate
+        uses: renovatebot/github-action@v46
+        env:
+          # Fine-grained PAT stored as the RENOVATE_TOKEN repo secret.
+          # Scope: only Betaminos/hassio-addons, with
+          #   Contents: read and write
+          #   Pull requests: read and write
+          # Update PRs then open as you, and their merges trigger build.yml.
+          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+          RENOVATE_PLATFORM: "github"
+          RENOVATE_ENDPOINT: "https://api.github.com/"
+          RENOVATE_REPOSITORIES: "Betaminos/hassio-addons"
+          # renovate.json5 in the repo root is the repository config:
+          # skip the onboarding PR and require that file to be present.
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_REQUIRE_CONFIG: "required"
