@@ -14,10 +14,11 @@ for Instant Mix in all Subsonic clients.
 
 ### Maloja
 Self-hosted music scrobble database with listening statistics and charts —
-a Spotify Wrapped-style year-in-review, fully local ([krateng/maloja](https://github.com/krateng/maloja)).
-Web UI on port 42010 (host port configurable in the add-on's Network
-settings). Before first start, set the admin password on the add-on's
-Configuration tab — it refuses to start without one.
+a Spotify Wrapped-style year-in-review, fully local
+([krateng/maloja](https://github.com/krateng/maloja)). Web UI on port 42010
+(host port configurable in the add-on's Network settings). Before first
+start, set the admin password on the add-on's Configuration tab — it refuses
+to start without one.
 
 ## Install
 
@@ -30,17 +31,17 @@ Configuration tab — it refuses to start without one.
 1. Start the AudioMuse-AI add-on and open `http://<pi-ip>:8000`.
 2. Run the Setup Wizard: point it at your Navidrome instance (URL and
    credentials), then start the first analysis of your library.
-3. Pair it with the
-   [AudioMuse-AI Navidrome plugin](https://github.com/NeptuneHub/AudioMuse-AI-NV-plugin)
-   (download `audiomuseai.ndp` from the upstream releases and add it in
-   Navidrome) to get Instant Mix and similar songs in all Subsonic clients.
+3. Pair it with the AudioMuse-AI Navidrome plugin (download `audiomuseai.ndp`
+   from the upstream releases and add it in Navidrome) to get Instant Mix
+   and similar songs in all Subsonic clients.
 
 ## Wiring Maloja to Navidrome
 
 1. Start the Maloja add-on and open `http://<pi-ip>:42010`.
-2. In Maloja's settings, create an API key (one per scrobbler is recommended).
+2. In Maloja's settings, create an API key (one per scrobber is recommended).
 3. In Navidrome, set `ListenBrainz.BaseURL` to
-   `http://<pi-ip>:42010/apis/listenbrainz/1/` (env: `ND_LISTENBRAINZ_BASEURL`).
+   `http://<pi-ip>:42010/apis/listenbrainz/1/`
+   (env: `ND_LISTENBRAINZ_BASEURL`).
 4. In Navidrome: user profile → Personal → enable *Scrobble to ListenBrainz*
    and paste the Maloja API key as the token.
 
@@ -48,6 +49,18 @@ Optional: add free Last.fm/Spotify API keys in Maloja's settings to get artist
 images in the UI. To backfill history, drop a Last.fm/Spotify/ListenBrainz
 export or another Maloja export into the import folder in the add-on data
 directory (`/data`).
+
+## Update automation
+
+Upstream releases are tracked by a self-hosted
+[Renovate](https://github.com/renovatebot/renovate) (AGPL-3.0) instance that
+runs as a scheduled GitHub Actions workflow *inside this repository* — no
+third-party app is installed, and it accesses the repo only through a
+least-privilege, repository-scoped token. When AudioMuse-AI or Maloja
+publishes a release, Renovate opens a pull request bumping the version pins
+in the affected add-on's `Dockerfile` and `config.json`; merging it triggers
+CI to rebuild and publish the image. Renovate itself is build tooling only —
+it is not part of any published add-on image or add-on data.
 
 ## Third-party licenses
 
@@ -62,7 +75,7 @@ directory (`/data`).
 
 ## Packaging files disclosure
 
-The packaging files in this repository (Dockerfiles, `run.sh`, workflows, JSON
-configs) were written by an LLM at my direction; I reviewed, adjusted, and
-tested them. I make no copyright claim over them — treat them as public
-domain, reuse freely, no attribution required.
+The packaging files in this repository (Dockerfiles, `run.sh`, workflows,
+Renovate configuration, JSON configs) were written by an LLM at my direction;
+I reviewed, adjusted, and tested them. I make no copyright claim over them —
+treat them as public domain, reuse freely, no attribution required.
