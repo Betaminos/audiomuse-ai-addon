@@ -1,0 +1,65 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Berlin",
+
+  "customManagers": [
+    // AudioMuse-AI: release tags are v-prefixed (v3.6.3), while the pins below
+    // use the bare semver form. extractVersion strips the "v".
+    {
+      "customType": "regex",
+      "description": "AudioMuse-AI release pin in the add-on Dockerfile",
+      "fileMatch": ["^audiomuse-ai/Dockerfile$"],
+      "matchStrings": ["ARG AUDIOMUSE_VERSION=(?<currentValue>\\S+)"],
+      "datasource": "github-releases",
+      "depName": "NeptuneHub/AudioMuse-AI",
+      "extractVersion": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "AudioMuse-AI upstream part of the add-on version (packaging suffix kept)",
+      "fileMatch": ["^audiomuse-ai/config\\.json$"],
+      "matchStrings": ["\"version\":\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)-\\d+\""],
+      "datasource": "github-releases",
+      "depName": "NeptuneHub/AudioMuse-AI",
+      "extractVersion": "^v(?<version>.*)$"
+    },
+
+    // Maloja: Docker Hub tags are bare semver (upstream CI uses
+    // metadata-action pattern={{version}}, e.g. krateng/maloja:3.2.7).
+    {
+      "customType": "regex",
+      "description": "Maloja image tag pin in the add-on Dockerfile",
+      "fileMatch": ["^maloja/Dockerfile$"],
+      "matchStrings": ["ARG MALOJA_VERSION=(?<currentValue>\\S+)"],
+      "datasource": "docker",
+      "depName": "krateng/maloja"
+    },
+    {
+      "customType": "regex",
+      "description": "Maloja upstream part of the add-on version (packaging suffix kept)",
+      "fileMatch": ["^maloja/config\\.json$"],
+      "matchStrings": ["\"version\":\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)-\\d+\""],
+      "datasource": "docker",
+      "depName": "krateng/maloja"
+    }
+  ],
+
+  "packageRules": [
+    // Only propose clean semver tags for krateng/maloja — never "latest",
+    // "edge", or other stray Docker Hub tags.
+    {
+      "matchDatasources": ["docker"],
+      "allowedVersions": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+
+    // Optional, commented out: let patch/minor updates merge and publish
+    // themselves. Remove the wrapping comment markers to go fully hands-off
+    // (major version bumps will still wait for your review).
+    // {
+    //   "matchUpdateTypes": ["patch", "minor"],
+    //   "automerge": true,
+    //   "automergeType": "pr"
+    // }
+  ]
+}
