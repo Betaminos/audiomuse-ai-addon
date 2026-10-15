@@ -20,6 +20,16 @@ a Spotify Wrapped-style year-in-review, fully local
 start, set the admin password on the add-on's Configuration tab — it refuses
 to start without one.
 
+### Rewind
+
+Spotify Wrapped–style listening stats for Navidrome (BernardoGiordano/rewind)
+— stories-style yearly recap, top songs/artists/albums/genres, listening
+clock, streaks, with music streamed from Navidrome during the slides. Reads
+the live Navidrome database directly from the share (read-only). Web UI on
+port 42000. Requires the Navidrome add-on on this instance with its data
+folder in `/share/navidrome` (`data_folder: /share/navidrome`), so the live
+`navidrome.db` is available.
+
 ## Install
 
 1. Settings → Add-ons → Add-on Store → ⋮ → Manage add-on repositories → add
@@ -50,6 +60,18 @@ images in the UI. To backfill history, drop a Last.fm/Spotify/ListenBrainz
 export or another Maloja export into the import folder in the add-on data
 directory (`/data`).
 
+## Wiring Rewind to Navidrome
+
+1. Make sure the Navidrome add-on runs with `data_folder: /share/navidrome`
+   (the live database then lives at `/share/navidrome/navidrome.db`).
+2. On the Rewind add-on's Configuration tab, set `navidrome_url` to your
+   Navidrome address (e.g. `http://<pi-ip>:4533`) — needed for cover art,
+   music in the slideshows, and manual scrobbles.
+3. Start the add-on and open `http://<pi-ip>:42000`.
+4. Log in with any Navidrome user (multi-user mode), or set both
+   `navidrome_user` and `navidrome_api_key` in the Configuration tab to pin
+   Rewind to a single user.
+
 ## Update automation
 
 Upstream releases are tracked by a self-hosted
@@ -67,11 +89,18 @@ it is not part of any published add-on image or add-on data.
 - **AudioMuse-AI** © NeptuneHub —
   [AGPL-3.0](https://github.com/NeptuneHub/AudioMuse-AI/blob/main/LICENSE).
   Source: https://github.com/NeptuneHub/AudioMuse-AI (this image embeds an
-  unmodified build of tag `v3.6.3`).
+  unmodified build of the upstream release pinned in the add-on's
+  `config.json`).
 - **Maloja** © krateng —
   [GPL-3.0](https://github.com/krateng/maloja/blob/master/LICENSE).
   Source: https://github.com/krateng/maloja (this image embeds an unmodified
-  copy of the official `krateng/maloja:3.2.7` Docker image).
+  copy of the official `krateng/maloja` Docker image, at the upstream
+  release pinned in the add-on's `config.json`).
+- **Rewind** © Bernardo Giordano —
+  [GPL-3.0](https://github.com/BernardoGiordano/rewind/blob/master/LICENSE).
+  Source: https://github.com/BernardoGiordano/rewind (this image embeds an
+  unmodified copy of the official `bernardogiordano/rewind` Docker image,
+  at the digest pinned in the add-on's `Dockerfile`).
 
 ## Packaging files disclosure
 
