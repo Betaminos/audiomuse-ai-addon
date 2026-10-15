@@ -5,24 +5,24 @@
 
   "customManagers": [
     // AudioMuse-AI: release tags are v-prefixed (v3.6.3), while the pins below
-    // use the bare semver form. extractVersion strips the "v".
+    // use the bare semver form. extractVersionTemplate strips the "v".
     {
       "customType": "regex",
       "description": "AudioMuse-AI release pin in the add-on Dockerfile",
-      "fileMatch": ["^audiomuse-ai/Dockerfile$"],
+      "managerFilePatterns": ["^audiomuse-ai/Dockerfile$"],
       "matchStrings": ["ARG AUDIOMUSE_VERSION=(?<currentValue>\\S+)"],
-      "datasource": "github-releases",
-      "depName": "NeptuneHub/AudioMuse-AI",
-      "extractVersion": "^v(?<version>.*)$"
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "NeptuneHub/AudioMuse-AI",
+      "extractVersionTemplate": "^v(?<version>.*)$"
     },
     {
       "customType": "regex",
       "description": "AudioMuse-AI upstream part of the add-on version (packaging suffix kept)",
-      "fileMatch": ["^audiomuse-ai/config\\.json$"],
+      "managerFilePatterns": ["^audiomuse-ai/config\\.json$"],
       "matchStrings": ["\"version\":\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)-\\d+\""],
-      "datasource": "github-releases",
-      "depName": "NeptuneHub/AudioMuse-AI",
-      "extractVersion": "^v(?<version>.*)$"
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "NeptuneHub/AudioMuse-AI",
+      "extractVersionTemplate": "^v(?<version>.*)$"
     },
 
     // Maloja: Docker Hub tags are bare semver (upstream CI uses
@@ -30,18 +30,18 @@
     {
       "customType": "regex",
       "description": "Maloja image tag pin in the add-on Dockerfile",
-      "fileMatch": ["^maloja/Dockerfile$"],
+      "managerFilePatterns": ["^maloja/Dockerfile$"],
       "matchStrings": ["ARG MALOJA_VERSION=(?<currentValue>\\S+)"],
-      "datasource": "docker",
-      "depName": "krateng/maloja"
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "krateng/maloja"
     },
     {
       "customType": "regex",
       "description": "Maloja upstream part of the add-on version (packaging suffix kept)",
-      "fileMatch": ["^maloja/config\\.json$"],
+      "managerFilePatterns": ["^maloja/config\\.json$"],
       "matchStrings": ["\"version\":\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)-\\d+\""],
-      "datasource": "docker",
-      "depName": "krateng/maloja"
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "krateng/maloja"
     }
   ],
 
