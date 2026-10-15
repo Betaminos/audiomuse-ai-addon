@@ -25,7 +25,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Run Renovate
-        uses: renovatebot/github-action@v46
+        # NOTE: this action has no moving "v46" major tag — pin the full
+        # release tag (check https://github.com/renovatebot/github-action/releases).
+        # Renovate's built-in github-actions manager will open PRs to bump
+        # this pin when new action releases come out.
+        uses: renovatebot/github-action@v46.3.8
         env:
           # Fine-grained PAT stored as the RENOVATE_TOKEN repo secret.
           # Scope: only Betaminos/hassio-addons, with
