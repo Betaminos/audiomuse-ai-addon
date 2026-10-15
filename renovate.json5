@@ -47,6 +47,18 @@
       "matchStrings": ["\"version\":\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)-\\d+\""],
       "datasourceTemplate": "docker",
       "depNameTemplate": "krateng/maloja"
+    },
+    // Rewind: upstream publishes only a `latest` Docker tag, so the image
+    // is wrapped digest-pinned. Renovate opens a PR with the new digest
+    // whenever :latest is republished; merging lets CI rebuild and bump
+    // the packaging suffix.
+    {
+      "customType": "regex",
+      "description": "Rewind image digest pin in the add-on Dockerfile",
+      "fileMatch": ["^rewind/Dockerfile$"],
+      "matchStrings": ["ARG REWIND_IMAGE=(?<depName>bernardogiordano/rewind):(?<currentValue>latest)@(?<currentDigest>sha256:[a-f0-9]{64})"],
+      "autoReplaceStringTemplate": "ARG REWIND_IMAGE={{depName}}:{{currentValue}}@sha256:{{newDigest}}",
+      "datasource": "docker"
     }
   ],
 
@@ -56,7 +68,8 @@
     // slashes for Renovate to treat it as a pattern.
     {
       "matchDatasources": ["docker"],
-      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+$/"
+      "matchDepNames": ["krateng/maloja"],
+      "allowedVersions": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
     },
 
     // The github-actions manager proposes updates to files under
