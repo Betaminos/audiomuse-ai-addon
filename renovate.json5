@@ -55,7 +55,7 @@
     {
       "customType": "regex",
       "description": "Rewind image digest pin in the add-on Dockerfile",
-      "fileMatch": ["^rewind/Dockerfile$"],
+      "managerFilePatterns": ["/^rewind/Dockerfile$/"],
       "matchStrings": ["ARG REWIND_IMAGE=(?<depName>bernardogiordano/rewind):(?<currentValue>latest)@(?<currentDigest>sha256:[a-f0-9]{64})"],
       "autoReplaceStringTemplate": "ARG REWIND_IMAGE={{depName}}:{{currentValue}}@sha256:{{newDigest}}",
       "datasourceTemplate": "docker"
@@ -69,7 +69,7 @@
     {
       "matchDatasources": ["docker"],
       "matchDepNames": ["krateng/maloja"],
-      "allowedVersions": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+$/"
     },
 
     // The github-actions manager proposes updates to files under
