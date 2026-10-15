@@ -1,0 +1,43 @@
+{
+  "name": "Rewind",
+  "version": "1.0.0-0",
+  "slug": "rewind",
+  "description": "Spotify Wrapped-style listening stats for Navidrome — reads the live Navidrome database directly",
+  "arch": [
+    "aarch64"
+  ],
+  "image": "ghcr.io/betaminos/hassio-addons/rewind",
+  "startup": "services",
+  "boot": "auto",
+  "hassio_api": false,
+  "host_network": false,
+  "ingress": false,
+  "panel_icon": "mdi:history",
+  "webui": "http://[HOST]:[PORT:4000]",
+  "map": [
+    "share:ro"
+  ],
+  "ports": {
+    "4000/tcp": 42000
+  },
+  "ports_description": {
+    "4000/tcp": "Rewind web UI (year-in-review, library, manual scrobbles)"
+  },
+  "options": {
+    "navidrome_url": "http://homeassistant.local:4533",
+    "db_path": "/share/navidrome/navidrome.db",
+    "session_secret": "",
+    "navidrome_user": "",
+    "navidrome_api_key": ""
+  },
+  "schema": {
+    "navidrome_url": "url",
+    "db_path": "str",
+    "session_secret": "str?",
+    "navidrome_user": "str?",
+    "navidrome_api_key": "password?"
+  },
+  "environment": {
+    "PORT": "4000"
+  }
+}
