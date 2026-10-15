@@ -1,6 +1,6 @@
 {
   "name": "Rewind",
-  "version": "1.0.0-0",
+  "version": "1.0.0-1",
   "slug": "rewind",
   "description": "Spotify Wrapped-style listening stats for Navidrome — reads the live Navidrome database directly",
   "arch": [
