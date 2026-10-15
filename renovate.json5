@@ -58,7 +58,7 @@
       "fileMatch": ["^rewind/Dockerfile$"],
       "matchStrings": ["ARG REWIND_IMAGE=(?<depName>bernardogiordano/rewind):(?<currentValue>latest)@(?<currentDigest>sha256:[a-f0-9]{64})"],
       "autoReplaceStringTemplate": "ARG REWIND_IMAGE={{depName}}:{{currentValue}}@sha256:{{newDigest}}",
-      "datasource": "docker"
+      "datasourceTemplate": "docker"
     }
   ],
 
