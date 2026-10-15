@@ -17,7 +17,7 @@
 # (the value below was current on 2026-10-15)
 ###############################################################################
 
-ARG REWIND_IMAGE=bernardogiordano/rewind:latest@sha256:6d02f9edd8a6908270b99e90ba419e9df190bbd39fb38aae55411f3039db6cb
+ARG REWIND_IMAGE=bernardogiordano/rewind:latest@sha256:6d02f9edd8a6908270b99e90baa419e9df190bbd39fb38aae55411f3039db6cb
 FROM ${REWIND_IMAGE}
 
 # jq is used by run.sh to read the Supervisor-provided add-on options.
