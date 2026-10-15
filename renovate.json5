@@ -3,11 +3,9 @@
   "extends": ["config:recommended"],
   "timezone": "Europe/Berlin",
 
-  // Author Renovate's commits as you, not as Mend's default
-  // "Renovate <renovate@whitesourcesoftware.com>" account (which shows
-  // "Unverified" signatures). The noreply address is the privacy-safe one
-  // tied to your GitHub account; replace with any address you prefer.
-  "gitAuthor": "Betaminos <1180151+Betaminos@users.noreply.github.com>",
+  // NOTE: gitAuthor is a self-hosted-only option and must NOT be set in this
+  // file — Renovate would reject the config. It is set via the
+  // RENOVATE_GIT_AUTHOR environment variable in the workflow instead.
 
   "customManagers": [
     // managerFilePatterns must be slash-wrapped to be treated as regex.
