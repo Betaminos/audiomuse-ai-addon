@@ -1,6 +1,6 @@
 {
   "name": "AudioMuse-AI",
-  "version": "3.6.3-5",
+  "version": "3.6.4-5",
   "slug": "audiomuse_ai",
   "description": "Sonic analysis, clustering and smart playlists for Navidrome (native aarch64 build with embedded PostgreSQL)",
   "arch": [
