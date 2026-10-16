@@ -10,7 +10,7 @@
 
 FROM debian:bookworm-slim
 
-ARG AUDIOMUSE_VERSION=3.6.3
+ARG AUDIOMUSE_VERSION=3.6.4
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
