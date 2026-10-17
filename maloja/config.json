@@ -1,6 +1,6 @@
 {
   "name": "Maloja",
-  "version": "3.2.7-5",
+  "version": "3.2.9-5",
   "slug": "maloja",
   "description": "Self-hosted music scrobble database with listening statistics and charts — a Spotify Wrapped-style year-in-review for Navidrome and any scrobbler",
   "arch": [
