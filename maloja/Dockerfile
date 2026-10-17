@@ -12,7 +12,7 @@
 # "version" upstream part, push — CI bumps the packaging suffix and publishes.
 ###############################################################################
 
-ARG MALOJA_VERSION=3.2.7
+ARG MALOJA_VERSION=3.2.9
 FROM krateng/maloja:${MALOJA_VERSION}
 
 # jq is used by run.sh to read the Supervisor-provided add-on options.
